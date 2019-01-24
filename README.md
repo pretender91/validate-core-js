@@ -16,75 +16,59 @@ npm isntall --save validate-core-js
 
 ### Usage
 
-You can import the library as dafault:
+#### Value Validation
 
-```javascript
-import validate from 'validate-core-js'
+```typescript
+import { value, validators } from 'validate-core-js'
 
-/**
- * single value validation
- */
-const { valid, errors } = validate.value(2, (value, done) => {
-  // returns { valid: true, errors: [] }
-  if (value > 0) {
-    return done()
-  }
-
-  return done('must be positive')
-})
-
-const { valid, errors } = validate.value(-1, (value, done) => {
-  // returns { valid: false, errors: ['must be positive'] }
-  if (value > 0) {
-    return done()
-  }
-
-  return done('must be positive')
-})
-
-/**
- * Array validation
- */
-
-const { valid, errors } = validate.array([1, -1], (value, done) => {
-  // returns { valid: false, errors: Map<number, string[]>({ 1: ['must be positive'] }) }
-  if (value > 0) {
-    return done()
-  }
-
-  return done('must be positive')
-})
-
-/**
- * Object validation
- */
-
-// example of validators
-const presence = (value, done) => {
-  if (!value) {
-    return done('is empty')
-  }
-  return done()
-}
-
-const biggerThan = target => (value, done) => {
-  if (typeof value === 'number') {
-    return value >= target ? done() : done('is too small')
-  }
-
-  done('not correct type')
-}
-
-const { valid, errors } = validate.object(
-  { age: 16 },
-  { name: presence, age: [biggerThan(17), biggerThan(18)] }
-)
+const { valid, errors } = value(-1, validators.number({ positive: true }))
+// { valid: false, errors: ['must be positive'] }
+const { valid, errors } = value('123', validators.length < string > ({ min: 5 })
+// { valid: false, errors: ['too short (minimum length is 5)'] }
+const { valid, errors } = value(undefined, validators.presence())
+// { valid: false, errors: ['must be present'] }
 ```
 
-Additionally, you can import seperate validation function:
+### Array Validation
 
-```javascript
+```typescript
+import { array, validators } from 'validate-core-js'
+
+const { valid, errors } = array([1, 2], validators.number({ odd: true }))
+// { valid: false, errors: Map<number, string[]>({ 1: ['must be positive'] }) }
+const { valid, errors } = array([undefined, 2], validators.presence())
+// { valid: false, errors: Map<number, string[]>({ 0: ['must be present'] }) }
+```
+
+#### Object Validation
+
+```typescript
+import { object, validators } from 'validate-core-js'
+
+const { valid, errors } = object(
+  { age: 16 },
+  { age: [validators.number({ gte: 18 })] } // you can pass multiple validators as array
+)
+// { valid: false, errors: Map<string, string[]>({ 'age': ['must be greater than or equal to 18'] }) }
+```
+
+#### Own Validators
+
+As you see there are predefined validators, but you can also create your own validators:
+
+```typescript
+import { Validator } from 'validate-core-js/dist/lib/validator'
 import validateValue from 'validate-core-js/dist/lib/value'
+
+const isOdd: Validator<number> = (value, done) => {
+  if (value % 2 === 0) {
+    return done('it is not odd') //with error
+  }
+
+  return done() // no error
+}
+
+validateValue(2, isOdd)
 ```
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
